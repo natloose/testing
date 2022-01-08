@@ -2,26 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-
-var ( s3session *s3.S3 )
+var (
+	s3session *s3.S3
+)
 
 const (
 	REGION = "eu-west-1"
 )
 
 func init() {
-	 // By default NewSession will only load credentials from the shared credentials file (~/.aws/credentials).
+	// By default NewSession will only load credentials from the shared credentials file (~/.aws/credentials).
 
 	// Creating a Session without additional options will load credentials region, and profile loaded from the environment and shared
 	// config automatically.
 
-	// This will create a session 
+	// This will create a session
 	// sess, err := session.NewSession()
 
 	// When creating Sessions optional aws.Config values can be passed in that will override the default, or loaded, config values the Session is being created with.
@@ -36,7 +38,7 @@ func init() {
 	s3session = s3.New(mySession, aws.NewConfig().WithRegion(REGION))
 
 }
-func listBuckets() (resp *s3.ListBucketsOutput){
+func listBuckets() (resp *s3.ListBucketsOutput) {
 	resp, err := s3session.ListBuckets(&s3.ListBucketsInput{})
 	if err != nil {
 		fmt.Println(err)
@@ -71,14 +73,46 @@ func deleteBucket() (resp *s3.DeleteBucketOutput) {
 		return
 	}
 
-
 	fmt.Printf(bucketName + " bucket successfully deleted")
 	return resp
 }
+
+func UploadFile() (*s3.PutObjectOutput, error) {
+	bucketName := "create-bucket-golang-sdk"
+	file, err := os.Open("image.jpg")
+	if err != nil {
+		panic(err)
+	}
+
+	resp, err := s3session.PutObject(&s3.PutObjectInput{
+		Body:   file,
+		Bucket: aws.String(bucketName),
+		Key:    aws.String("kfc.jpg"),
+	})
+
+	return resp, nil
+}
+
+func DeleteFile() (*s3.DeleteObjectOutput, error) {
+	bucketName := "create-bucket-golang-sdk"
+	resp, err := s3session.DeleteObject(&s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String("kfc.jpg"),
+	})
+
+	if err != nil {
+		panic(err)
+	}
+
+	return resp, nil
+}
 func main() {
-	fmt.Println(listBuckets())
-	fmt.Println(createBucket())
-	fmt.Println(listBuckets())
-	fmt.Println(deleteBucket())
-	fmt.Println(listBuckets())
+	// fmt.Println(createBucket())
+	// fmt.Println(UploadFile())
+	fmt.Println(DeleteFile())
+	// fmt.Println(listBuckets())
+	// fmt.Println(createBucket())
+	// fmt.Println(listBuckets())
+	// fmt.Println(deleteBucket())
+	// fmt.Println(listBuckets())
 }
